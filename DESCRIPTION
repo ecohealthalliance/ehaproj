@@ -17,8 +17,8 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-URL: https://github.com/ecohealthalliance/containerTemplateUtils
-BugReports: https://github.com/ecohealthalliance/containerTemplateUtils/issues
+URL: https://github.com/ecohealthalliance/ehaproj
+BugReports: https://github.com/ecohealthalliance/ehaproj/issues
 Imports: 
     blastula,
     cli,
@@ -26,4 +26,13 @@ Imports:
     glue,
     mime,
     paws,
-    purrr
+    purrr,
+    gpg,
+    whoami,
+    sodium,
+    rlang,
+    lifecycle,
+    withr,
+    future,
+    listenv,
+    future.callr

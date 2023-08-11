@@ -1,4 +1,5 @@
-Binding: mkrproj
+Binding: get_ehaproj_template
 Title: EcoHealth Alliance Project
 Subtitle: Reproducible project with {targets}, {renv}, GitHub, and more...
-OpenFiles: _targets.R, README.Rmd
+Caption: Some Caption
+Icon: eha_minilogo.png

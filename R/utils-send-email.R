@@ -18,7 +18,6 @@
 #' @return Invisible. Update email sent to list of recipients in `to`
 #'
 #' @export send_email_update
-
 send_email_update <- function(to,
                               from = "rsconnect@ecohealthalliance.org",
                               project_name,
@@ -190,14 +189,14 @@ send_email_update_tar <- function(to,
   report_links_collapse <- glue::glue_collapse(report_links,sep = ", ",last = "and ")
   n_reports <- length(report_links)
   if(attach){
-    body <- cli::pluralize(
+    body <- pluralize(
       "{test_warning}Please find {n_reports} report{?s} attached.
          For the best viewing experience, download the report before opening. \n\n",
       "The {project_name} automated reports can be viewed here: \n\n",
       {report_links_collapse}, "\n\n",
     )
   } else {
-    body <-cli::pluralize(
+    body <-pluralize(
       "{test_warning}The {project_name} automated reports can be viewed here: \n\n",
       {report_links_collapse}, "\n\n",
     )

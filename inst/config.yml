@@ -1,46 +1,152 @@
-# This file defines all the user-specific config options
-- name: "activate.prompt"
-  type: "logical[1]"
-  default: true
-  description: >
-    Automatically prompt the user to activate the current project, if it does
-    not appear to already be activated? This is mainly useful to help ensure
-    that calls to `renv::snapshot()` and `renv::restore()` use the project
-    library. See `?renv::activate` for more details.
-
-- name: "autoloader.enabled"
-  type: "logical[1]"
-  default: true
-  description: >
-    Enable the renv auto-loader? When `FALSE`, renv will not not
-    automatically load a project containing an renv autoloader within
-    its `.Rprofile`. In addition, renv will not write out the project
-    auto-loader in calls to `renv::init()`.
-
-- name: "auto.snapshot"
-  type: "logical[1]"
-  default: false
-  description: >
-    Automatically snapshot changes to the project library when the project
-    dependencies change?
-
-- name: "parent.dir"
+# This file defines all the user-specific config option for defaults.
+# Prepending a default value with "ask:" means to still ask despite there
+# being a default value.
+# `"i"` means, where applicable, to prompt interactive selection
+# `NULL` means no default specified
+- name: "name"
   type: "character[1]"
-  default: "ask"
-  prompt: "Project parent directory: "
+  default: "ask:NULL"
+  save_default: false
+  prompt: "project/directory/repo name (no spaces)"
   description: >
-    The parent directory for new projects to be created in.
+    Name of the project, which will be used for the directory, .Rproj file,
+    GitHub repository and AWS resources.
 
-- name: "copy.method"
-  type: "*"
-  default: "auto"
+- name: "parent_dir"
+  type: "character[1]"
+  default: "ask:i"
+  save_default: true
+  prompt: "Create project as subdirectory of"
   description: >
-    The method to use when attempting to copy directories. See **Copy Methods**
-    for more information.
+    Directory in which the project will be located. `i` will make use of an
+    interactive filepicker if available.
 
-- name: "connect.timeout"
+- name: "use_git"
+  type: "logical[1]"
+  default: "ask:TRUE"
+  save_default: true
+  only_if: git_installed
+  prompt: "Set up git for project?"
+  description: >
+    Whether to set up git for the projcet
+
+- name: "use_github"
+  type: "logical[1]"
+  default: "ask:TRUE"
+  only_if: [use_git, has_internet, github_personal_access_token, can_use_github]
+  save_default: true
+  prompt: "Set up GitHub repository?"
+  description: >
+    Create a GitHub repository for your project
+
+- name: "github_org"
+  type: "character[1]"
+  default: "ask:i"
+  only_if: use_github
+  save_default: true
+  prompt: "GitHub organization name"
+  description: >
+    The GitHub organization or namespace to create the repository in. `i` will
+    prompt the user to choose from organizations they have permissions in.
+
+- name: "github_private"
+  type: "character[1]"
+  default: "ask:TRUE"
+  only_if: use_github
+  save_default: true
+  prompt: "Private GitHub repository?"
+  description: >
+    Should the GitHub repository be private?
+
+- name: "use_gitcrypt"
+  type: "logical[1]"
+  default: "ask:TRUE"
+  only_if: [use_git, gpg_installed, git_crypt_installed]
+  prompt: "Set up git-crypt to encrypt secret or sensitive data?"
+  save_default: true
+  description: >
+    Set up encryption for the Git repository with git-crypt?
+
+- name: "gitcrypt_collaborators"
+  type: "character[*]"
+  default: "ask:i"
+  only_if: use_gitcrypt
+  prompt:  "Git-crypt collaborators"
+  save_default: false
+  description: >
+    What public keys should we add to the repository? A comma or semicolon-
+    separated list of emails. The creator will always be added.
+
+- name: "use_gitcrypt_gh_secret"
+  type: "logical[1]"
+  default: "ask:TRUE"
+  only_if: [use_gitcrypt, use_github]
+  prompt: "Export git-crypt key to GitHub for automation?"
+  save_default: true
+  description: >
+    Export your git-crypt key to GitHub as an encrypted secret. It will
+    save a base64-representation of the git-crypt symmetric key as
+    `GIT_CRYPT_KEY64`.  Default GitHub actions in the repository make use of
+    this.
+
+- name: "create_gh_project"
+  type: "logical[1]"
+  only_if: use_github
+  save_default: true
+  default: "ask:FALSE"
+  prompt: "Create an associated GitHub Project Board?"
+
+- name: "create_bucket"
+  type: "logical[1]"
+  only_if: [has_internet, aws_credentials_file_exists, aws_has_permissions]
+  save_default: true
+  default: "ask:FALSE"
+  prompt: "Create cloud storage (S3 bucket) for shared targets, data, and/or outputs?"
+
+- name: "save_defaults"
+  type: "logical[1]"
+  default: "ask:TRUE"
+  prompt: "Save selections as defaults for next time?"
+  description: >
+    If there are interactive selections, save them as defaults in the user
+    configuration for next time. Defaults are saved including `ask:` so
+    will still be prompted unless the user sets the directly. These are saved
+    in a modified `config.yml` file.
+
+- name: "verbose"
+  type: "logical[1]"
+  default: "TRUE"
+  description: >
+    Whether the package should print informative messages when assembling
+    the repository and information
+
+- name: "nproc"
   type: "integer[1]"
-  default: 20
+  default: "3"
   description: >
-    The amount of time to spend (in seconds) when attempting to download
-    a file. Only applicable when the `curl` downloader is used.
+    How many parallel processes should the package use for asynchronous routines
+    in the background? If >1, these are used to fetch data or run routines
+    while the user answers questions, preventing pauses in project setup.
+    Async workers will use `future.callr` for values > 1,
+    unless the user sets a different future plan() in their environment.
+
+
+- name: "template_remote"
+  type: "logical[1]"
+  default: "TRUE"
+  only_if: [has_internet, can_use_github]
+  prompt: "Fetch remote template?"
+  description: >
+    Fetch the project template remotely from GitHub? Otherwise the template stored
+    internally in the package is used (also if fetching fails for some reason).
+    The remote may be more up-to-date, the git version of the template is recorded
+    and can be compared to the latest
+
+- name: "template_ref"
+  type: "character[1]"
+  default: "ecohealthalliance/ehaproj-template@main"
+  prompt: "GitHub ref or URL of template"
+  description: >
+    What source to use for the remote template? A GitHub repository of the format
+    user/rep@ref can be provided, or the URL of a ZIP or tarball.
+
