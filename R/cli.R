@@ -9,23 +9,37 @@ cli_ask <- function(text, default = NA, .envir = parent.frame()) {
   res
 }
 
-cli_menu <- function(text, choices, default = NA, .envir = parent.frame()) {
+cli_menu <- function(text, choices, default = NA, .envir = parent.frame(),
+                     links = cli::ansi_has_hyperlink_support()) {
   if (is.character(default)) default <- pmatch(default, choices)
   default <- as.numeric(default)
+  choices <- rlang::set_names(choices, choices)
   stopifnot(is.na(default) || is_index(choices, default))
   deftxt <- if(is.na(default)) "" else paste0("(Default: ", default, ". ", choices[default], ")")
+  if (links) {
+    printed_choices <- paste0("{.run [", choices, "](ehaproj::choice('", choices, "'))}") # add hyperlinks
+  } else {
+    printed_choices <- choices
+  }
   repeat {
     cli_div(theme = list(ol = list("margin-left" = 2)))
     bullet(text, .envir = .envir)
-    cli_ol(choices)
+    cli_ol(printed_choices)
     cli_end()
-    res <- prompt()
+    res <- prompt() |> tolower()
     if (res == "" && !is.na(default)) {
       res <- default
       break
     }
+    if (links && grepl("^ehaproj::choice\\('(.*)'\\)$", res, ignore.case = TRUE)) {
+      res <- eval(parse(text=res))
+      break
+    }
+    else if (res %in% tolower(choices)) {
+      break
+    }
     suppressWarnings(res <- as.numeric(res))
-    if (!is_index(res, choices)) {
+    if (!is_index(choices, res)) {
       cli_alert_warning("Sorry, I did not get that.")
     } else {
       res <- choices[res]
@@ -84,5 +98,7 @@ vb <- function(expr) {
   invisible(NULL)
 }
 
-
-
+#' @export
+choice <- function(text) {
+  text
+}
